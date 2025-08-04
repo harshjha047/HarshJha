@@ -21,7 +21,7 @@ const App = () => {
   // transfer data using hoc
   return (
     <>
-    <div className={`${mode?"bg-[#111]":""}`}>
+    <div className={`${mode?"bg-[#111]":""} rat`}>
       <myContext.Provider value={[mode, setMode]}>
       <Nav></Nav>
       <Content></Content>

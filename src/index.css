@@ -11,7 +11,8 @@
     .navbar{
         width: 99%;
     }
-    html{
+    
+    .rat{
     overflow-x: hidden;
     width: 99vw;
 }
