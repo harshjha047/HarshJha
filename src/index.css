@@ -2,8 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-*{
-    scroll-behavior: smooth;
+* {
+  scroll-behavior: smooth;
+    /* border:1px solid #000; */
 }
 
-
+@media only screen and (max-width: 400px) {
+    .navbar{
+        width: 99%;
+    }
+    body{
+    overflow-x: hidden;
+    width: 100vw;
+}
+  .text-\[112px\]\/\[129px\] {
+    font-size: 2.4rem;
+    height: 50vh;
+    justify-content: end;
+    line-height: 1.2;
+  }
+  .text-8xl\/\[154px\] {
+    font-size: 2.5rem /* 96px */;
+    line-height: 154px;
+}
+.h-\[135vh\] {
+    height: 85vh;
+    /* width: 100%; */
+}
+  .dpImg{
+    position: absolute;
+    top: 0;
+    margin: 0;
+    left: 0;
+  }
+  .workCard{
+    height: 45vh;
+  }
+  
+  .workCard,.w-\[48\%\] {
+     width: 100%;
+}
+  .text-\[60px\]\/\[80px\] {
+    font-size: 30px;
+    line-height: 40px;
+}
+.mediaWrap{
+    gap: 1rem;
+}
+.text-\[32px\]\/\[38px\] {
+    font-size: 1.5rem;
+    line-height: 1.1;
+}
+.workCardDis{
+    /* display: ; */
+    /* border: 1px solid #000; */
+    overflow-y: scroll;
+}
+.navPro{
+    width: 7vh;
+    height: 7vh;
+}
+.mediaImgFrame{
+    height: auto;
+}
+}
