@@ -4,16 +4,16 @@
 
 * {
   scroll-behavior: smooth;
-    /* border:1px solid #000; */
+    border:1px solid #000;
 }
 
 @media only screen and (max-width: 400px) {
     .navbar{
         width: 99%;
     }
-    body{
+    html{
     overflow-x: hidden;
-    width: 100vw;
+    width: 99vw;
 }
   .text-\[112px\]\/\[129px\] {
     font-size: 2.4rem;
