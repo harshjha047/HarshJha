@@ -13,7 +13,7 @@ function Nav() {
       <div className="w-full navbar h-[10vh] flex justify-center items-center absolute top-0">
         <div className="w-[90%] navdo h-full flex gap-3 items-center relative">
           <a className={` font-[Switzer-Regular] ${Mode}`}  href="#">Home</a>
-          <a className={` font-[Switzer-Regular] ${Mode}`}  href="#Work">Posts</a>
+          <a className={` font-[Switzer-Regular] ${Mode}`}  href="#Work">Work</a>
         <div className={`border w-[4vh] h-[4vh] rounded-full flex justify-center right-0 absolute items-center ${mode?"text-[#fff]":""}`} onClick={()=>{setMode(!mode)}}>{mode?<IoMoonSharp />:<IoSunnySharp/>}</div>
 
         </div>

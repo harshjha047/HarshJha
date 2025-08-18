@@ -4,48 +4,67 @@
 
 * {
   scroll-behavior: smooth;
-  /* border:1px solid #000; */
 }
- html::-webkit-scrollbar {
-    width: 0px;
-  }
-  #loader{
-    height: 100vh;
-    width: 100%;
-    background-color: #111;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
+html::-webkit-scrollbar {
+  width: 0px;
 }
+
+#loader {
+  height: 100vh;
+  width: 100%;
+  background-color: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+}
+
 #loaderItem {
   position: relative;
 }
+
 #loaderItem:after {
-  content: '';
-  background: #FFF;
+  content: "";
+  background: #fff;
   position: absolute;
   left: 50%;
   top: 50%;
   width: 32px;
   height: 32px;
-  border-radius:4px;
+  border-radius: 4px;
   transform-origin: -16px -32px;
   animation: rotate 1s linear infinite;
 }
+
+.projectImg {
+  transform: scaleY(0);
+  transition: all 0.2s ease-in-out;
+}
+
+.projectItem:hover .projectImg {
+  transform: scaleY(1);
+}
+
+
+
+
 @keyframes rotate {
-   0% , 100% {
-      transform: rotate(-45deg)  translate(-50% , -50%)
-    }
-   50% {
-      transform: rotate(-245deg)  translate(-50% , -50%)
-   }
+  0%,
+  100% {
+    transform: rotate(-45deg) translate(-50%, -50%);
+  }
+  50% {
+    transform: rotate(-245deg) translate(-50%, -50%);
+  }
 }
 
 @media only screen and (max-width: 400px) {
   .navbar {
     width: 99%;
+  }
+  .projectItem:hover .projectImg {
+    transform: scaleY(0);
   }
 
   .rat {
@@ -59,12 +78,11 @@
     line-height: 1.2;
   }
   .text-8xl\/\[154px\] {
-    font-size: 2.5rem /* 96px */;
+    font-size: 2.5rem;
     line-height: 154px;
   }
   .h-\[135vh\] {
     height: 85vh;
-    /* width: 100%; */
   }
   .dpImg {
     position: absolute;
@@ -73,7 +91,7 @@
     left: 0;
   }
   .workCard {
-    height: 45vh;
+    height: 10vh;
   }
 
   .workCard,
@@ -91,16 +109,17 @@
     font-size: 1.5rem;
     line-height: 1.1;
   }
-  .workCardDis {
-    /* display: ; */
-    /* border: 1px solid #000; */
-    overflow-y: scroll;
-  }
   .navPro {
     width: 7vh;
     height: 7vh;
   }
   .mediaImgFrame {
     height: auto;
+  }
+  .projectItem {
+    width: 100%;
+  }
+  .projectDisPara {
+    display: none;
   }
 }
