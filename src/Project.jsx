@@ -6,7 +6,7 @@ import { myContext } from "./App";
 const Project = () => {
     const [data, setData]=useState(API.project)
     const [mode, setMode]=useContext(myContext)
-    const Mode = mode?"#fff":"#000" 
+    const Mode = mode?"#fff":"#000"
 
     
   return (

@@ -9,11 +9,11 @@ import IntelliSqrImg from "./media/intelliSQR.auth.png";
 
 const API = {
   project: [
-    {img:EcommImg, name: "E-comm_prodect.pg", discription: "E-Commerce website product page. React.js, vite.", link: "https://ecomm-react-tau.vercel.app/", date: "2025", role: "Developer | designer", },
-    {img:CyberpunkImg, name: "Cyberpunk.pg", discription:   "3D model based cyberpunk themed landing page. Three.js, vite", link: "https://cyberpunk-spyder.vercel.app/", date: "2024", role: "Developer | designer",  },
-    {img:DivImg, name: "Div.me",discription:" Multi purpose Media platform & Hackathon Project. React.js, MongoDB, Node.js, Express.js, GSAP ",link: "https://div-react-hf3x.vercel.app/",date: "2024",role: "Developer",},
-    {img:IntelliSqrImg, name: "intelliSQR.auth",discription:"User Authentication and authorization system. Typescript, Tailwind, React.ts, AWS, MongoDB Atlas, Node.ts Express.ts ...more",link: "https://intelli-sqr-auth.vercel.app/",date: "2025",role: "Developer",},
     {img:PlaybeatImg, name: "Playbeat.site",discription:"Vanilla website developed to represent. javaScript",link: "https://spontaneous-parfait-fee957.netlify.app/",date: "2025",role: "Developer | Designer and more",},
+    {img:DivImg, name: "Div.me",discription:" Multi purpose Media platform & Hackathon Project. React.js, MongoDB, Node.js, Express.js, GSAP ",link: "https://div-react-hf3x.vercel.app/",date: "2024",role: "Developer",},
+    {img:CyberpunkImg, name: "Cyberpunk.pg", discription:"3D model based cyberpunk themed landing page. Three.js, vite", link: "https://cyberpunk-spyder.vercel.app/", date: "2024", role: "Developer | designer",  },
+    {img:IntelliSqrImg, name: "intelliSQR.auth",discription:"User Authentication and authorization system. Typescript, Tailwind, React.ts, AWS, MongoDB Atlas, Node.ts Express.ts ...more",link: "https://intelli-sqr-auth.vercel.app/",date: "2025",role: "Developer",},
+    {img:EcommImg, name: "E-comm_prodect.pg", discription: "E-Commerce website product page. React.js, vite.", link: "https://ecomm-react-tau.vercel.app/", date: "2025", role: "Developer | designer", },
   ],
   clone:[
     {name:"Kamyafood", link:"https://harshjha047.github.io/kamyafood/",},

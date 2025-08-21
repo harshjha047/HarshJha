@@ -7,7 +7,7 @@ function Clone() {
     {data.map((ref,ind) => {
         return(
             <a href={ref.link} key={ind}>
-            <div className="border px-4 font-[Switzer-Medium] py-1 rounded hover:shadow-lg">{ref.name}</div>
+            <div className="border px-4 font-[Switzer-Medium] py-1 rounded hover:shadow-lg hover:scale-110">{ref.name}</div>
             </a>
         )
     })}
