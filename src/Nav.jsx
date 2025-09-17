@@ -1,12 +1,15 @@
 import {useContext} from "react";
 import { myContext } from "./App";
 import { IoSunnySharp, IoMoonSharp  } from "react-icons/io5";
+import { useTheme } from "./context/ThemeContext";
 
 
 
 function Nav() {
   const[mode, setMode]=useContext(myContext)
- const Mode = mode?"text-gray-300":"text-gray-500" 
+  let {theme,setTheme,darkThemeCSS,lightThemeCSS}=useTheme()
+  console.log(theme)
+ const Mode = theme?"text-gray-300":"text-gray-500" 
 
   return (
     <>
@@ -14,7 +17,7 @@ function Nav() {
         <div className="w-[90%] navdo h-full flex gap-3 items-center relative">
           <a className={` font-[Switzer-Regular] ${Mode}`}  href="#">Home</a>
           <a className={` font-[Switzer-Regular] ${Mode}`}  href="#Work">Work</a>
-        <div className={`border w-[4vh] h-[4vh] rounded-full flex justify-center right-0 absolute items-center ${mode?"text-[#fff]":""}`} onClick={()=>{setMode(!mode)}}>{mode?<IoMoonSharp />:<IoSunnySharp/>}</div>
+        <div className={`border w-[4vh] h-[4vh] rounded-full flex justify-center right-0 absolute items-center ${theme?"text-[#fff]":""}`} onClick={()=>{setMode(!mode), setTheme(!theme)}}>{theme?<IoMoonSharp />:<IoSunnySharp/>}</div>
 
         </div>
       </div>
