@@ -12,7 +12,7 @@ const API = {
     {img:PlaybeatImg, name: "Playbeat.site",discription:"Vanilla website developed to represent. javaScript",link: "https://spontaneous-parfait-fee957.netlify.app/",date: "2025",role: "Developer | Designer and more",},
     {img:DivImg, name: "Div.me",discription:" Multi purpose Media platform & Hackathon Project. React.js, MongoDB, Node.js, Express.js, GSAP ",link: "https://harshjha047.github.io/-DIV--Hackathon/",date: "2024",role: "Developer",},
     {img:CyberpunkImg, name: "Cyberpunk.pg", discription:"3D model based cyberpunk themed landing page. Three.js, vite", link: "https://cyberpunk-spyder.vercel.app/", date: "2024", role: "Developer | designer",  },
-    {img:"IntelliSqrImg", name: "Ulfat.com",discription:"FullStack web Application developed and designed by me . Tailwind, React.ts, AWS, MongoDB Atlas, Node.ts Express.ts ...more",link: "https://ecomm-react-6lxg.vercel.app/",date: "2025",role: "Developer | Designer and more",},
+    {img:IntelliSqrImg, name: "Ulfat.com",discription:"FullStack web Application developed and designed by me . Tailwind, React.ts, AWS, MongoDB Atlas, Node.ts Express.ts ...more",link: "https://ecomm-react-6lxg.vercel.app/",date: "2025",role: "Developer | Designer and more",},
     {img:EcommImg, name: "E-comm_prodect.pg", discription: "E-Commerce website product page. React.js, vite.", link: "https://ecomm-react-tau.vercel.app/", date: "2025", role: "Developer | designer", },
   ],
   clone:[
