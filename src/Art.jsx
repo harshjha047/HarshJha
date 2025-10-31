@@ -6,6 +6,17 @@ const Art = () => {
   const [dp, usedp]=useState(API.ProfileImg)
  const [mode,setMode]= useContext( myContext)
  const Mode = mode?"text-[#fff]":"" 
+ const preloadImages = (urls) => {
+  urls.forEach((url) => {
+    const img = new Image();
+    img.src = url;
+  });
+};
+useEffect(() => {
+  preloadImages([
+    "./media/dp.jpg"
+  ]);
+}, []);
   return (
     <>
     
