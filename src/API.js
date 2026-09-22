@@ -1,25 +1,27 @@
 import InstaImg from "./media/instagram-1708437015-removebg-preview.png";
-import ProfileImg from "./media/dp.jpg";
-import CyberpunkImg from "./media/Cyberpunk.pg.png";
-import EcommImg from "./media/E-comm_prodect.pg.png";
-import DivImg from "./media/Div.me.png";
-import PlaybeatImg from "./media/Playbeat.site.png";
-import IntelliSqrImg from "./media/001.png";
+import ProfileDp from "./media/1736145854489.webp";
+import ProfileImg from "./media/dp.webp";
+import PlaybeatImg from "./media/Playbeat.site.webp";
+import IntelliSqrImg from "./media/001.webp";
+import CC from "./media/cc.webp";
+import Div from "./media/div.webp";
 
 
 const API = {
   project: [
-    {img:IntelliSqrImg, name: "Ulfat.com",discription:"FullStack web Application developed and designed by me . Tailwind, React.ts, AWS, MongoDB Atlas, Node.ts Express.ts ...more",link: "https://ulfat-in.vercel.app",date: "2025",role: "Developer | Designer and more",},
-    {img:PlaybeatImg, name: "Playbeat.site",discription:"Vanilla website developed to represent. javaScript",link: "https://spontaneous-parfait-fee957.netlify.app/",date: "2025",role: "Developer | Designer and more",},
-    {img:DivImg, name: "Div.me",discription:" Multi purpose Media platform & Hackathon Project. React.js, MongoDB, Node.js, Express.js, GSAP ",link: "https://harshjha047.github.io/-DIV--Hackathon/",date: "2024",role: "Developer",},
-    {img:CyberpunkImg, name: "Cyberpunk.pg", discription:"3D model based cyberpunk themed landing page. Three.js, vite", link: "https://cyberpunk-spyder.vercel.app/", date: "2024", role: "Developer | designer",  },
-    {img:EcommImg, name: "E-comm_prodect.pg", discription: "E-Commerce website product page. React.js, vite.", link: "https://ecomm-react-tau.vercel.app/", date: "2025", role: "Developer | designer", },
+    { img: Div, name: "DIV | Brand Site", discription: "A modern brand website for DIV, showcasing their products and services.", link: "https://thediv.in", date: "2026", role: "Developer | Designer and more", },
+    { img: CC, name: "Creative Circuit | Brand Site", discription: "A modern brand website for DIV, showcasing their products and services.", link: "https://creative-circuit.vercel.app/", date: "2025", role: "Developer | Designer and more", },
+    { img: IntelliSqrImg, name: "Ulfat | E-commerce", discription: "FullStack web Application developed and designed by me . Tailwind, React.ts, AWS, MongoDB Atlas, Node.ts Express.ts ...more", link: "https://ulfat-in.vercel.app", date: "2025", role: "Developer | Designer and more", },
+    { img: PlaybeatImg, name: "Playbeat | Community Page", discription: "Vanilla website developed to represent. javaScript", link: "https://spontaneous-parfait-fee957.netlify.app/", date: "2025", role: "Developer | Designer and more", },
   ],
-  clone:[
-    {name:"Kamyafood", link:"https://harshjha047.github.io/kamyafood/",},
-    {name:"Tesla", link:"https://harshjha047.github.io/Tesla/",},
-    {name:"Microsoft", link:"https://harshjha047.github.io/Microsoft/",},
-    {name:"REDUX", link:"https://harshjha047.github.io/REDUX/",},
+  clone: [
+    { name: "Div.me", link: "https://harshjha047.github.io/-DIV--Hackathon/", },
+    { name: "Cyberpunk", link: "https://cyberpunk-spyder.vercel.app/", },
+    { name: "E-comm_prodect", link: "https://ecomm-react-tau.vercel.app/", },
+    { name: "Kamyafood", link: "https://harshjha047.github.io/kamyafood/", },
+    { name: "Tesla", link: "https://harshjha047.github.io/Tesla/", },
+    { name: "Microsoft", link: "https://harshjha047.github.io/Microsoft/", },
+    { name: "REDUX", link: "https://harshjha047.github.io/REDUX/", },
   ],
   fontList: [
     new FontFace("ClashDisplay-Variable", "url(./media/ClashDisplay_Complete/ClashDisplay_Complete/Fonts/TTF/ClashDisplay-Variable.ttf)"),
@@ -27,6 +29,7 @@ const API = {
   ],
   InstaImg: InstaImg,
   ProfileImg: ProfileImg,
+  ProfileDP: ProfileDp,
 };
 
 export default API;
