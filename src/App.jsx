@@ -1,22 +1,9 @@
 import { useEffect } from "react";
-import Lenis from "lenis";
+import { initSmoothScroll } from "./smooth.js";
 import Portfolio from "./Portfolio.jsx";
 
 const App = () => {
-  useEffect(() => {
-    const lenis = new Lenis();
-    let id;
-    const raf = (time) => {
-      lenis.raf(time);
-      id = requestAnimationFrame(raf);
-    };
-    id = requestAnimationFrame(raf);
-    return () => {
-      cancelAnimationFrame(id);
-      lenis.destroy();
-    };
-  }, []);
-
+  useEffect(() => initSmoothScroll(), []);
   return <Portfolio />;
 };
 

@@ -1,37 +1,43 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { WORK, WORK_CATS, JOBS, STACK } from "./data/portfolio.js";
-import Resume from "./media/HarshJhaResume.pdf";
+import { scrollToId, stopScroll, startScroll } from "./smooth.js";
 import "./portfolio.css";
 
 /* ---------- static content ---------- */
 
-const A = "/assets/";
 const B = "/assets/brands/";
+/* Stable, shareable résumé URL (lives in /public, so the filename never gets a hash) */
+const RESUME = "/Harsh-Jha-Resume.pdf";
+const LINKEDIN = "https://www.linkedin.com/in/harsh-jha0047/";
+const INSTAGRAM = "https://www.instagram.com/harsh_jha0";
+const GITHUB = "https://github.com/harshjha047";
+/* Optional: set VITE_CONTACT_ENDPOINT (e.g. a Formspree form URL) to send the brief without a mail app */
+const CONTACT_ENDPOINT = import.meta.env.VITE_CONTACT_ENDPOINT || "";
 
 const LOGOS = {
   gorevive: B + "gorevive.avif",
-  div: B + "div.png",
-  cc: B + "creative-circuit-light.png",
-  ac: B + "academor.jpg",
-  ff: B + "fab5.svg",
-  ty: "https://media.licdn.com/dms/image/v2/D560BAQEh3LIj4eRIGQ/company-logo_200_200/B56Zx0wBspIcAI-/0/1771485274106/qspiders_logo?e=2147483647&v=beta&t=AYz5wujbgiWWuONlu4sxaW6EKZQkUuzHeQUUdY49hL4",
+  div: B + "div.webp",
+  cc: B + "creative-circuit-light.webp",
+  ac: B + "academor.webp",
+  ff: B + "fab5.webp",
+  ty: B + "testyantra-dark.svg",
 };
 const JOB_LOGO = { gr: "gorevive", cc: "cc", ty: "ty", ac: "ac", ff: "ff" };
 
 const BRANDS = [
   { name: "GoRevive", src: B + "gorevive.avif", link: "https://gorevive.in" },
-  { name: "Fab Five Network", src: B + "fab5.svg", link: "https://fab5network.com" },
-  { name: "DIV", src: B + "div.png", link: "https://thediv.in" },
-  { name: "Creative Circuit", src: B + "creative-circuit-light.png", link: "https://creative-circuit.vercel.app/", tall: true },
-  { name: "Bharat Radius", src: B + "bharat-radius.png", link: "https://bharatradius.com/" },
+  { name: "Fab Five Network", src: B + "fab5.webp", link: "https://fab5network.com" },
+  { name: "DIV", src: B + "div.webp", link: "https://thediv.in" },
+  { name: "Creative Circuit", src: B + "creative-circuit-light.webp", link: "https://creative-circuit.vercel.app/", tall: true },
+  { name: "Bharat Radius", src: B + "bharat-radius.webp", link: "https://bharatradius.com/" },
   { name: "Qspiders · Test Yantra", src: B + "testyantra-dark.svg", link: "https://www.testyantra.com" },
   { name: "Bahikhata", src: B + "bahikhata.webp", link: "https://bahikhata.fab5connect.com/", tall: true },
   { name: "Samadhan", src: B + "samadhan.webp", link: "https://samadhan.fab5connect.com/", tall: true },
   { name: "Drishti", src: B + "drishti.webp", link: "https://drishti-tan.vercel.app", tall: true },
   { name: "DIV Sign", src: B + "divsign.webp", tall: true },
-  { name: "Finvia", src: B + "finvia.png", tall: true },
-  { name: "Academor", src: B + "academor.jpg", link: "https://academor.com", tall: true },
-  { name: "Playbeat", src: B + "playbeat.jpg", link: "https://spontaneous-parfait-fee957.netlify.app/", tall: true },
+  { name: "Finvia", src: B + "finvia.webp", tall: true },
+  { name: "Academor", src: B + "academor.webp", link: "https://academor.com", tall: true },
+  { name: "Playbeat", src: B + "playbeat.webp", link: "https://spontaneous-parfait-fee957.netlify.app/", tall: true },
   { name: "DAV Networks", link: "https://davnetworks.in/" },
   { name: "Ulfat", link: "https://ulfat-in.vercel.app" },
   { name: "Samridhi", link: "https://samridhisi.vercel.app" },
@@ -57,13 +63,27 @@ const THEMES = {
   dark: { "--bg": "#111111", "--fg": "#ffffff", "--muted": "#9a9a9a", "--line": "rgba(255,255,255,.16)", "--soft": "#1b1b1b" },
 };
 
-/* "Live iframe" previews on hover for these sites (others fall back to a screenshot) */
-const USE_IFRAME = true;
-const IFRAME_OK = ["gorevive", "div", "cc"];
+const THEME_KEY = "pf-theme";
+const initialDark = () => {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved) return saved === "dark";
+  } catch { /* storage unavailable */ }
+  return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+};
+
+/* Case studies get their own URL (#work/<id>) so a recruiter can share one project directly */
+const caseFromHash = () => {
+  const m = typeof window !== "undefined" && window.location.hash.match(/^#work\/(.+)$/);
+  return m ? decodeURIComponent(m[1]) : null;
+};
+
 const norm = (t) => t.replace(/\s+\d[\d.]*$/, "").trim();
 const STRIPES = "repeating-linear-gradient(135deg,rgba(127,127,127,.10) 0 10px,rgba(127,127,127,.17) 10px 20px)";
-const shotSrc = (u) => "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(u) + "?w=1440&h=900";
+/* Fallback only: projects without a local `img` get a remote screenshot. Prefer adding a local .webp to data/portfolio.js. */
+const shotSrc = (u, w = 960) => "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(u) + `?w=${w}&h=${Math.round(w * 0.625)}`;
 const withBase = (src) => (src && src.startsWith("assets/") ? "/" + src : src);
+const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 /* ---------- shared styles ---------- */
 
@@ -73,7 +93,8 @@ const MUTED = { color: "var(--muted)" };
 const pill = (t) => ({ fontFamily: "inherit", fontWeight: 500, fontSize: 14, borderRadius: 999, padding: "7px 14px", cursor: "pointer", whiteSpace: "nowrap", flex: "none", border: `1px solid ${t.border}`, background: t.bg, color: t.fg });
 const tag = { fontWeight: 500, fontSize: 15, border: "1px solid var(--line)", borderRadius: 4, padding: "4px 14px" };
 const lineInput = { font: "inherit", fontWeight: 500, fontSize: 20, color: "var(--fg)", background: "transparent", border: 0, borderBottom: "1px solid var(--line)", padding: "12px 0", outline: "none" };
-const caseLink = { fontWeight: 500, fontSize: 15, border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", textDecoration: "none" };
+const ctaBtn = { display: "inline-flex", alignItems: "center", fontWeight: 500, fontSize: 14, lineHeight: 1.2, whiteSpace: "nowrap", borderRadius: 999, padding: "10px 16px", border: "1px solid var(--line)", textDecoration: "none", transition: "transform .3s ease,border-color .2s ease" };
+const caseLink = {fontWeight: 500, fontSize: 15, border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", textDecoration: "none" };
 
 /* ---------- small pieces ---------- */
 
@@ -93,53 +114,60 @@ function JobLogo({ k, alt }) {
   );
 }
 
-function Thumb({ p, hovered, warm, wide, useIframe }) {
+/* Hover zoom is pure CSS (.card:hover .thumb-img), so hovering never re-renders the page */
+function Thumb({ p }) {
   const [imgOk, setImgOk] = useState(true);
-  const cover = { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block", background: "#fff", transition: "transform .6s cubic-bezier(.2,.8,.2,1)", transform: hovered ? "scale(1.035)" : "none" };
   const src = withBase(p.img) || (p.live ? shotSrc(p.live) : null);
-  const f = wide ? 2.5 : 4;
   return (
     <>
       <span style={{ position: "absolute", inset: 0, background: STRIPES, display: "flex", alignItems: "flex-end", padding: 14, fontFamily: "ui-monospace,Menlo,monospace", fontSize: 12, color: "#8a8a8a" }}>{p.shot || ""}</span>
-      {src && imgOk && <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgOk(false)} style={cover} />}
-      {useIframe && p.live && IFRAME_OK.includes(p.id) && warm && (
-        <iframe src={p.live} title={p.title} tabIndex={-1} aria-hidden="true" scrolling="no"
-          style={{ position: "absolute", left: 0, top: 0, width: f * 100 + "%", height: f * 100 + "%", border: 0, background: "#fff", transformOrigin: "0 0", transform: `scale(${1 / f})`, pointerEvents: "none", opacity: hovered ? 1 : 0, transition: "opacity .25s ease" }} />
-      )}
+      {src && imgOk && <img src={src} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setImgOk(false)} className="thumb-img"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block", background: "#fff" }} />}
     </>
   );
 }
 
 function CaseImage({ cs }) {
   const [failed, setFailed] = useState(false);
-  const src = withBase(cs.img) || (cs.live ? shotSrc(cs.live) : null);
+  const src = withBase(cs.img) || (cs.live ? shotSrc(cs.live, 1440) : null);
   if (src && !failed) {
-    return <img src={src} alt="" referrerPolicy="no-referrer" onError={() => setFailed(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />;
+    return <img src={src} alt="" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />;
   }
   return <span style={{ position: "absolute", left: 20, bottom: 16, fontFamily: "ui-monospace,Menlo,monospace", fontSize: 13, color: "#8a8a8a" }}>{cs.shot}</span>;
 }
 
-function Pings() {
-  const ring = (size, delay) => ({ position: "absolute", left: "50%", top: "50%", width: size, height: size, marginLeft: `calc(${size} / -2)`, marginTop: `calc(${size} / -2)`, borderRadius: "50%", border: "1px solid rgba(255,255,255,.35)", animation: `pf-ping 2.4s cubic-bezier(0,0,.2,1) ${delay}s infinite` });
-  return (
-    <span aria-hidden="true">
-      <span style={ring("clamp(200px,32vh,300px)", 0)} />
-      <span style={ring("clamp(260px,44vh,420px)", 1.2)} />
-    </span>
-  );
+/* Ticking pieces live in their own components so only they re-render, not the whole page */
+function Clock() {
+  const fmt = () => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" });
+  const [time, setTime] = useState(fmt);
+  useEffect(() => {
+    const id = setInterval(() => setTime(fmt()), 15000);
+    return () => clearInterval(id);
+  }, []);
+  return <>{time}</>;
+}
+
+function RotatingWord() {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => setW((x) => (x + 1) % WORDS.length), 2400);
+    return () => clearInterval(id);
+  }, []);
+  return <span key={w} style={{ display: "inline-block", animation: "pf-rise .5s cubic-bezier(.2,.8,.2,1)" }}>{WORDS[w]}</span>;
 }
 
 /* ---------- page ---------- */
 
 export default function Portfolio() {
-  const [dark, setDark] = useState(false);
-  const [w, setW] = useState(0);
-  const [time, setTime] = useState("");
-  const [caseId, setCaseId] = useState(null);
+  const [dark, setDark] = useState(initialDark);
+  const [caseId, setCaseId] = useState(caseFromHash);
   const [jobOpen, setJobOpen] = useState({ gr: true });
   const [form, setForm] = useState({ name: "", email: "", msg: "" });
   const [needs, setNeeds] = useState([]);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
@@ -147,34 +175,63 @@ export default function Portfolio() {
   const [year, setYear] = useState("All");
   const [tech, setTech] = useState("All");
   const [techOpen, setTechOpen] = useState(false);
-  const [hoverCard, setHoverCard] = useState(null);
-  const [warm, setWarm] = useState({});
-  const [wide, setWide] = useState(typeof window !== "undefined" ? window.innerWidth > 900 : true);
   const rail = useRef(null);
   const dialog = useRef(null);
   const copyT = useRef(null);
+  const returnFocus = useRef(null);
 
+  useEffect(() => () => clearTimeout(copyT.current), []);
+
+  /* theme: follow the OS by default, remember an explicit choice */
+  const toggleDark = () => setDark((d) => {
+    try { localStorage.setItem(THEME_KEY, d ? "light" : "dark"); } catch { /* storage unavailable */ }
+    return !d;
+  });
+
+  /* case study <-> URL hash, so links are shareable and the browser Back button closes the case study */
   useEffect(() => {
-    const tick = () => setTime(new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }));
-    tick();
-    const t1 = setInterval(tick, 15000);
-    const t2 = setInterval(() => setW((x) => (x + 1) % WORDS.length), 2400);
-    const onResize = () => setWide(window.innerWidth > 900);
-    window.addEventListener("resize", onResize);
-    return () => { clearInterval(t1); clearInterval(t2); clearTimeout(copyT.current); window.removeEventListener("resize", onResize); };
+    const sync = () => setCaseId(caseFromHash());
+    window.addEventListener("popstate", sync);
+    window.addEventListener("hashchange", sync);
+    return () => { window.removeEventListener("popstate", sync); window.removeEventListener("hashchange", sync); };
   }, []);
-
-  useEffect(() => {
-    const onEsc = (e) => { if (e.key === "Escape") setCaseId(null); };
-    window.addEventListener("keydown", onEsc);
-    document.body.style.overflow = caseId ? "hidden" : "";
-    return () => { window.removeEventListener("keydown", onEsc); document.body.style.overflow = ""; };
-  }, [caseId]);
-
-  const go = (id) => {
-    const el = document.getElementById(id);
-    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 72, behavior: "smooth" });
+  const openCase = (id) => {
+    const url = "#work/" + encodeURIComponent(id);
+    if (caseFromHash()) window.history.replaceState(window.history.state, "", url);
+    else window.history.pushState({ pfCase: true }, "", url);
+    setCaseId(id);
   };
+  const closeCase = () => {
+    if (window.history.state?.pfCase) window.history.back();
+    else { window.history.replaceState(null, "", window.location.pathname + window.location.search); setCaseId(null); }
+  };
+
+  /* while a case study is open: lock page scroll, Escape closes, Tab stays inside the dialog */
+  const caseOpen = !!caseId;
+  useEffect(() => {
+    if (!caseOpen) return;
+    returnFocus.current = document.activeElement;
+    stopScroll();
+    document.body.style.overflow = "hidden";
+    dialog.current?.querySelector(FOCUSABLE)?.focus({ preventScroll: true });
+    const onKey = (e) => {
+      if (e.key === "Escape") { closeCase(); return; }
+      if (e.key !== "Tab" || !dialog.current) return;
+      const els = [...dialog.current.querySelectorAll(FOCUSABLE)];
+      if (!els.length) return;
+      const first = els[0], last = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      startScroll();
+      returnFocus.current?.focus?.({ preventScroll: true });
+    };
+  }, [caseOpen]);
+
   const copyEmail = () => {
     try { navigator.clipboard.writeText(EMAIL); } catch { /* clipboard unavailable */ }
     setCopied(true);
@@ -184,7 +241,6 @@ export default function Portfolio() {
 
   const t = dark ? THEMES.dark : THEMES.light;
   const tone = (on) => ({ bg: on ? t["--fg"] : "transparent", fg: on ? t["--bg"] : t["--fg"], border: on ? t["--fg"] : t["--line"] });
-  const useIframe = USE_IFRAME && wide;
 
   /* ----- work data ----- */
   const all = useMemo(() => WORK.map((p) => ({
@@ -208,7 +264,6 @@ export default function Portfolio() {
   const clearFilters = () => { setQ(""); setCat("All"); setType("All"); setYear("All"); setTech("All"); };
   const opts = (value, setter, values, labels) => values.map((v, i) => ({ v, label: labels ? labels[i] : v, ...tone(value === v), pick: () => setter(value === v && v !== "All" ? "All" : v) }));
 
-  const enter = (id) => { setHoverCard(id); setWarm((s) => (s[id] ? s : { ...s, [id]: true })); };
   const railBy = (dir) => { const r = rail.current; if (r) r.scrollBy({ left: dir * r.clientWidth * 0.8, behavior: "smooth" }); };
 
   /* ----- case study ----- */
@@ -216,24 +271,41 @@ export default function Portfolio() {
   const csIdx = seq.findIndex((p) => p.id === caseId);
   const cs = csIdx >= 0 ? seq[csIdx] : null;
   const next = cs && seq.length ? seq[(csIdx + 1) % seq.length] : null;
-  const nextCase = () => { if (next) { setCaseId(next.id); if (dialog.current) dialog.current.scrollTop = 0; } };
+  const nextCase = () => { if (next) { openCase(next.id); if (dialog.current) dialog.current.scrollTop = 0; } };
 
   /* ----- contact ----- */
   const setField = (k) => (e) => { const v = e.target.value; setForm((f) => ({ ...f, [k]: v })); };
-  const submit = (e) => {
-    e.preventDefault();
+  const mailtoHref = () => {
     const body = `Hi Harsh,\n\n${form.msg}\n\nLooking for: ${needs.join(", ") || "—"}\n\n— ${form.name} (${form.email})`;
-    window.location.href = `mailto:${EMAIL}?subject=${encodeURIComponent("Project brief from " + form.name)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+    return `mailto:${EMAIL}?subject=${encodeURIComponent("Project brief from " + form.name)}&body=${encodeURIComponent(body)}`;
+  };
+  const submit = async (e) => {
+    e.preventDefault();
+    setSendError(false);
+    if (!CONTACT_ENDPOINT) { window.location.href = mailtoHref(); setSent(true); return; }
+    setSending(true);
+    try {
+      const res = await fetch(CONTACT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ name: form.name, email: form.email, message: form.msg, looking_for: needs.join(", "), _subject: "Portfolio brief from " + form.name }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setSent(true);
+    } catch {
+      setSendError(true);
+    } finally {
+      setSending(false);
+    }
   };
 
   const card = (p, isWide) => (
-    <button key={p.id} type="button" onClick={() => { setCaseId(p.id); setHoverCard(null); }} onMouseEnter={() => enter(p.id)} onMouseLeave={() => setHoverCard(null)}
+    <button key={p.id} type="button" className="card" onClick={() => openCase(p.id)}
       style={isWide
         ? { flex: "none", width: "min(84vw,620px)", scrollSnapAlign: "start", fontFamily: "inherit", color: "inherit", textAlign: "left", background: "transparent", border: 0, padding: 0, cursor: "pointer", display: "flex", flexDirection: "column" }
         : { fontFamily: "inherit", color: "inherit", textAlign: "left", background: "transparent", border: 0, padding: 0, cursor: "pointer", display: "flex", flexDirection: "column", minWidth: 0 }}>
       <span style={{ display: "block", position: "relative", width: "100%", aspectRatio: "16/10", borderRadius: isWide ? 20 : 16, overflow: "hidden", background: "var(--soft)" }}>
-        <Thumb p={p} hovered={hoverCard === p.id} warm={!!warm[p.id]} wide={isWide} useIframe={useIframe} />
+        <Thumb p={p} />
         <span style={{ position: "absolute", left: isWide ? 14 : 12, top: isWide ? 14 : 12, fontSize: 12, fontWeight: 500, background: "var(--bg)", color: "var(--fg)", borderRadius: 999, padding: "4px 10px" }}>{p.typeLabel}</span>
       </span>
       <span style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: isWide ? 16 : 12, marginTop: isWide ? 16 : 14, width: "100%" }}>
@@ -261,8 +333,8 @@ export default function Portfolio() {
             <a href="#experience" className="navlink" style={{ textDecoration: "none" }}>Experience</a>
             <a href="#contact" className="navlink" style={{ textDecoration: "none" }}>Contact</a>
           </div>
-          <a href={Resume} target="_blank" rel="noopener" style={{ fontSize: 14, textDecoration: "none", whiteSpace: "nowrap" }}>Résumé ↗</a>
-          <button type="button" onClick={() => setDark((d) => !d)} aria-label="Toggle dark mode" className="ring-hover"
+          <a href={RESUME} target="_blank" rel="noopener" style={{ fontSize: 14, textDecoration: "none", whiteSpace: "nowrap" }}>Résumé ↗</a>
+          <button type="button" onClick={toggleDark} aria-label="Toggle dark mode" className="ring-hover"
             style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--line)", background: "transparent", color: "var(--fg)", display: "grid", placeItems: "center", cursor: "pointer", fontSize: 15 }}>{dark ? "☾" : "☀"}</button>
         </div>
       </nav>
@@ -274,15 +346,15 @@ export default function Portfolio() {
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px 28px", fontSize: 14, ...MUTED }}>
               <span>{AVAILABILITY}</span>
               <span>SDE @ GoRevive</span>
-              <span>Noida · {time} IST</span>
+              <span>Noida · <Clock /> IST</span>
             </div>
             <h1 className="clash" style={{ fontWeight: 600, fontSize: "clamp(42px,7.2vw,110px)", lineHeight: 1.22, letterSpacing: "-0.01em", margin: 0 }}>
               <span style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0 .2em" }}>Hi, I’m Harsh,
                 <span className="avatar" style={{ display: "inline-block", width: "1.45em", height: "1.45em", borderRadius: "50%", overflow: "hidden", flex: "none", transition: "transform .35s cubic-bezier(.3,1.6,.5,1)" }}>
-                  <img src={A + "harsh.webp"} alt="Harsh Jha" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img src="/assets/harsh.webp" alt="Harsh Jha" width="160" height="160" fetchpriority="high" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </span>
               </span>
-              <span style={{ display: "block" }}>a <span key={w} style={{ display: "inline-block", animation: "pf-rise .5s cubic-bezier(.2,.8,.2,1)" }}>{WORDS[w]}</span></span>
+              <span style={{ display: "block" }}>a <RotatingWord /></span>
               <span style={{ display: "block" }}>Developer.</span>
             </h1>
           </div>
@@ -293,6 +365,12 @@ export default function Portfolio() {
               ))}
             </dl>
             <p style={{ fontSize: 14, lineHeight: 1.6, margin: 0, ...MUTED }}>I design and build full-stack products — B2B platforms, payment flows, real-time apps and the sites that sell them.</p>
+            {/* the three things a recruiter looks for first */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <a href={RESUME} target="_blank" rel="noopener" className="grow" style={{ ...ctaBtn, color: "var(--bg)", background: "var(--fg)", border: "1px solid var(--fg)" }}>Résumé ↗</a>
+              <a href={`mailto:${EMAIL}`} className="case-link" style={ctaBtn}>Email</a>
+              <a href={LINKEDIN} target="_blank" rel="noopener" className="case-link" style={ctaBtn}>LinkedIn ↗</a>
+            </div>
           </div>
         </section>
 
@@ -366,14 +444,11 @@ export default function Portfolio() {
               <button type="button" onClick={clearFilters} style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 15, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", cursor: "pointer" }}>Clear filters</button>
             </div>
           )}
-        </section>
-
-        {/* clones */}
-        <section style={{ paddingTop: "clamp(72px,9vw,120px)" }}>
-          <h2 style={{ ...H2, marginBottom: 24 }}>Clones</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {/* practice clones: kept, but low-key so client work leads */}
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 56, fontSize: 14, ...MUTED }}>
+            <span style={{ marginRight: 4 }}>Practice clones:</span>
             {CLONES.map((c) => (
-              <a key={c.name} href={c.link} target="_blank" rel="noopener" className="chip-link" style={{ ...tag, padding: "4px 16px", textDecoration: "none", transition: "transform .2s ease,box-shadow .2s ease" }}>{c.name}</a>
+              <a key={c.name} href={c.link} target="_blank" rel="noopener" className="chip-link" style={{ ...tag, fontSize: 13, padding: "2px 12px", textDecoration: "none", transition: "transform .2s ease,box-shadow .2s ease" }}>{c.name}</a>
             ))}
           </div>
         </section>
@@ -426,27 +501,6 @@ export default function Portfolio() {
           </div>
         </section>
 
-        {/* personal media */}
-        <section style={{ paddingTop: "clamp(96px,12vw,180px)" }}>
-          <h2 style={{ ...H2, marginBottom: 28 }}>Personal Media</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: "clamp(16px,3vw,40px)" }}>
-            {[
-              { bg: "linear-gradient(to top,#08437D,#0882BD)", title: "Connect on LinkedIn", sub: "Work and project updates", href: "https://www.linkedin.com/in/harsh-jha0047/", label: "#harsh-jha0047",
-                art: <><Pings /><img src={A + "harsh.webp"} alt="" style={{ position: "relative", zIndex: 1, width: "clamp(140px,22vh,200px)", height: "clamp(140px,22vh,200px)", borderRadius: "50%", objectFit: "cover" }} /></> },
-              { bg: "linear-gradient(to bottom right,#833ab4,#fd1d1d,#fcb045)", title: "Follow me on Instagram", sub: "Life updates", href: "https://www.instagram.com/harsh_jha0", label: "@harsh_jha0",
-                art: <img src={A + "instagram.png"} alt="" className="insta" style={{ width: "min(100%,360px)", display: "block", transition: "transform .5s cubic-bezier(.3,1.6,.5,1)" }} /> },
-            ].map((m) => (
-              <div key={m.title} style={{ borderRadius: 44, padding: "32px clamp(24px,3vw,44px)", background: m.bg, color: "#fff", display: "flex", flexDirection: "column", minHeight: "clamp(480px,70vh,720px)" }}>
-                <div style={{ flex: 1, display: "grid", placeItems: "center", position: "relative", minHeight: 280 }}>{m.art}</div>
-                <h3 className="clash" style={{ fontWeight: 600, fontSize: 30, lineHeight: 1.2, margin: 0 }}>{m.title}</h3>
-                <p style={{ fontSize: 16, margin: "10px 0 18px", opacity: 0.9 }}>{m.sub}</p>
-                <a href={m.href} target="_blank" rel="noopener" className="media-pill"
-                  style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 10, fontWeight: 500, fontSize: 16, color: "#fff", background: "rgba(0,0,0,.14)", border: "1px solid #fff", borderRadius: 999, padding: "14px 32px", textDecoration: "none", transition: "transform .4s ease,box-shadow .4s ease" }}>{m.label} <span>›</span></a>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* contact */}
         <section id="contact" style={{ scrollMarginTop: 72, paddingTop: "clamp(96px,12vw,180px)", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: "40px clamp(40px,6vw,96px)", alignItems: "start" }}>
           <div>
@@ -465,11 +519,16 @@ export default function Portfolio() {
                 })}
               </div>
               <textarea value={form.msg} onChange={setField("msg")} rows={3} placeholder="Tell me about the project" aria-label="Message" className="line-input" style={{ ...lineInput, resize: "vertical" }} />
-              <button type="submit" className="grow" style={{ alignSelf: "flex-start", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 12, fontWeight: 500, fontSize: 16, color: "var(--bg)", background: "var(--fg)", border: 0, borderRadius: 999, padding: "16px 32px", cursor: "pointer", transition: "transform .3s ease" }}>Send brief <span>↗</span></button>
+              {sendError && (
+                <p role="alert" style={{ fontSize: 15, margin: 0, ...MUTED }}>
+                  Couldn’t send that. <a href={mailtoHref()} style={{ textDecoration: "underline" }}>Open it in your mail app</a> or email {EMAIL}.
+                </p>
+              )}
+              <button type="submit" disabled={sending} className="grow" style={{ opacity: sending ? 0.6 : 1, alignSelf: "flex-start", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 12, fontWeight: 500, fontSize: 16, color: "var(--bg)", background: "var(--fg)", border: 0, borderRadius: 999, padding: "16px 32px", cursor: "pointer", transition: "transform .3s ease" }}>{sending ? "Sending…" : "Send brief"} <span>↗</span></button>
             </form>
           ) : (
             <div>
-              <div className="clash" style={{ fontWeight: 600, fontSize: 36, lineHeight: 1.15 }}>Thanks, {(form.name || "friend").split(" ")[0]} — your mail app has the brief ready.</div>
+              <div className="clash" style={{ fontWeight: 600, fontSize: 36, lineHeight: 1.15 }}>Thanks, {(form.name || "friend").split(" ")[0]} {CONTACT_ENDPOINT ? "— got it. I’ll reply within a day." : "— your mail app has the brief ready."}</div>
               <button type="button" onClick={() => { setSent(false); setForm({ name: "", email: "", msg: "" }); setNeeds([]); }} style={{ fontFamily: "inherit", marginTop: 20, fontWeight: 500, fontSize: 15, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", cursor: "pointer" }}>Write another</button>
             </div>
           )}
@@ -477,12 +536,17 @@ export default function Portfolio() {
       </main>
 
       <footer style={{ maxWidth: 1400, margin: "0 auto", padding: `clamp(120px,16vw,220px) ${PAD} 40px` }}>
-        <div style={{ fontSize: 16 }}>Need more information about me? Here’s my <a href={Resume} target="_blank" rel="noopener" style={MUTED}>↗ Résumé</a></div>
+        <div style={{ fontSize: 16 }}>Need more information about me? Here’s my <a href={RESUME} target="_blank" rel="noopener" style={MUTED}>↗ Résumé</a></div>
         <div className="clash" style={{ fontWeight: 500, fontSize: "clamp(40px,6vw,80px)", lineHeight: 1.2, ...MUTED, marginTop: "clamp(48px,8vw,96px)" }}>GitHub:</div>
-        <a href="https://github.com/harshjha047" target="_blank" rel="noopener" className="clash gh" style={{ display: "inline-block", fontWeight: 500, fontSize: "clamp(40px,6vw,80px)", lineHeight: 1.2, color: "var(--fg)", textDecoration: "none", transition: "letter-spacing .3s ease" }}>@harshjha047</a>
+        <a href={GITHUB} target="_blank" rel="noopener" className="clash gh" style={{ display: "inline-block", fontWeight: 500, fontSize: "clamp(40px,6vw,80px)", lineHeight: 1.2, color: "var(--fg)", textDecoration: "none", transition: "letter-spacing .3s ease" }}>@harshjha047</a>
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, marginTop: 64, fontSize: 13, ...MUTED }}>
-          <span>© 2026 Harsh Jha</span>
-          <span>Noida, India · {time} IST</span>
+          <span>© {new Date().getFullYear()} Harsh Jha</span>
+          <span style={{ display: "flex", gap: 20 }}>
+            <a href={LINKEDIN} target="_blank" rel="noopener">LinkedIn</a>
+            <a href={INSTAGRAM} target="_blank" rel="noopener">Instagram</a>
+            <a href={GITHUB} target="_blank" rel="noopener">GitHub</a>
+          </span>
+          <span>Noida, India · <Clock /> IST</span>
         </div>
       </footer>
 
@@ -490,7 +554,7 @@ export default function Portfolio() {
         <div ref={dialog} data-lenis-prevent role="dialog" aria-modal="true" aria-label={cs.title} style={{ position: "fixed", inset: 0, zIndex: 60, background: "var(--bg)", color: "var(--fg)", overflow: "auto" }}>
           <div style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--bg)" }}>
             <div style={{ maxWidth: 1400, margin: "0 auto", padding: `18px ${PAD}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-              <button type="button" onClick={() => setCaseId(null)} className="ring-hover" style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 15, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", cursor: "pointer" }}>← Back</button>
+              <button type="button" onClick={closeCase} className="ring-hover" style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 15, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", cursor: "pointer" }}>← Back</button>
               <span style={{ fontSize: 14, ...MUTED }}>{String(csIdx + 1).padStart(2, "0")} / {String(seq.length).padStart(2, "0")}</span>
               <button type="button" onClick={nextCase} style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 15, color: "var(--bg)", background: "var(--fg)", border: 0, borderRadius: 999, padding: "9px 18px", cursor: "pointer" }}>Next →</button>
             </div>
@@ -522,7 +586,7 @@ export default function Portfolio() {
               ))}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 40 }}>
-              <button type="button" onClick={() => { setCaseId(null); setTimeout(() => go("contact"), 60); }} style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 16, color: "var(--bg)", background: "var(--fg)", border: 0, borderRadius: 999, padding: "16px 28px", cursor: "pointer" }}>Build something like this ↗</button>
+              <button type="button" onClick={() => { closeCase(); setTimeout(() => scrollToId("contact"), 120); }} style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 16, color: "var(--bg)", background: "var(--fg)", border: 0, borderRadius: 999, padding: "16px 28px", cursor: "pointer" }}>Build something like this ↗</button>
               {next && <button type="button" onClick={nextCase} style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 16, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "16px 28px", cursor: "pointer" }}>Next: {next.title}</button>}
             </div>
           </article>
