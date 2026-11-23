@@ -2,7 +2,7 @@
 
 Full-stack developer building B2B platforms, payment flows, real-time apps and the sites that sell them.
 
-**Live:** _add your URL here_ · **Résumé:** [`/Harsh-Jha-Resume.pdf`](public/Harsh-Jha-Resume.pdf) · **LinkedIn:** [harsh-jha0047](https://www.linkedin.com/in/harsh-jha0047/) · **Email:** harshjha.00004@gmail.com
+**Live:** [harsh-jha.vercel.app](https://harsh-jha.vercel.app/) · **Résumé:** [`/Harsh-Jha-Resume.pdf`](public/Harsh-Jha-Resume.pdf) · **LinkedIn:** [harsh-jha0047](https://www.linkedin.com/in/harsh-jha0047/) · **Email:** harshjha.00004@gmail.com
 
 ![Preview](public/og.jpg)
 

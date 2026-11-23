@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { WORK, WORK_CATS, JOBS, STACK } from "./data/portfolio.js";
 import { scrollToId, stopScroll, startScroll } from "./smooth.js";
+import { initCrew } from "./crew.js";
 import "./portfolio.css";
 
 /* ---------- static content ---------- */
@@ -114,9 +115,28 @@ function JobLogo({ k, alt }) {
   );
 }
 
+/* How a project works, as a row of steps — used where there is no real screenshot to show */
+function Flow({ steps, big }) {
+  return (
+    <span className={big ? "flow big" : "flow"} aria-hidden="true">
+      {steps.map((st, i) => <span key={st} style={{ display: "contents" }}>{i > 0 && <i>→</i>}<b>{st}</b></span>)}
+    </span>
+  );
+}
+
+function LogoTile({ src }) {
+  return (
+    <span style={{ position: "absolute", inset: 0, background: "#fff", display: "grid", placeItems: "center" }}>
+      <img src={src} alt="" loading="lazy" decoding="async" className="thumb-img" style={{ maxWidth: "55%", maxHeight: "45%", objectFit: "contain" }} />
+    </span>
+  );
+}
+
 /* Hover zoom is pure CSS (.card:hover .thumb-img), so hovering never re-renders the page */
 function Thumb({ p }) {
   const [imgOk, setImgOk] = useState(true);
+  if (!p.img && p.flow) return <Flow steps={p.flow} />;
+  if (!p.img && p.logo) return <LogoTile src={p.logo} />;
   const src = withBase(p.img) || (p.live ? shotSrc(p.live) : null);
   return (
     <>
@@ -129,6 +149,8 @@ function Thumb({ p }) {
 
 function CaseImage({ cs }) {
   const [failed, setFailed] = useState(false);
+  if (!cs.img && cs.flow) return <Flow steps={cs.flow} big />;
+  if (!cs.img && cs.logo) return <span style={{ position: "absolute", inset: 0, background: "#fff", display: "grid", placeItems: "center" }}><img src={cs.logo} alt="" style={{ maxWidth: "40%", maxHeight: "45%", objectFit: "contain" }} /></span>;
   const src = withBase(cs.img) || (cs.live ? shotSrc(cs.live, 1440) : null);
   if (src && !failed) {
     return <img src={src} alt="" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />;
@@ -157,6 +179,49 @@ function RotatingWord() {
   return <span key={w} style={{ display: "inline-block", animation: "pf-rise .5s cubic-bezier(.2,.8,.2,1)" }}>{WORDS[w]}</span>;
 }
 
+/* Selected work: big stacking cards. Each sticks a little lower than the last, so they pile up like a deck. */
+const ACCENTS = { gorevive: "#1f9d55", support: "#ff6a2b", webrtc: "#3b6cff" };
+function SelectedCase({ p, i, onOpen }) {
+  const steps = p.flow || [];
+  const dur = Math.max(3.2, steps.length * 0.9);
+  return (
+    <button type="button" onClick={() => onOpen(p.id)} className="case rv"
+      style={{ position: "sticky", top: 88 + i * 22, "--ac": ACCENTS[p.id] || "#3b6cff", "--dur": dur + "s", fontFamily: "inherit", color: "inherit", textAlign: "left", cursor: "pointer", width: "100%", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: "clamp(28px,4vw,56px)", alignItems: "stretch", padding: "clamp(22px,3.4vw,44px)", background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 28, boxShadow: "0 -24px 60px -30px rgba(0,0,0,.18)" }}>
+      <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <span style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+          <span className="case-num">{String(i + 1).padStart(2, "0")}</span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, paddingTop: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 500, background: "var(--ac)", color: "#fff", borderRadius: 999, padding: "4px 10px" }}>{p.typeLabel}</span>
+            <span style={{ fontSize: 13, ...MUTED }}>{p.year}</span>
+          </span>
+        </span>
+        <span style={{ display: "block", fontSize: 14, ...MUTED, marginTop: "clamp(20px,3vw,36px)" }}>{p.kind}</span>
+        <span className="clash" style={{ display: "block", fontWeight: 600, fontSize: "clamp(32px,3.4vw,52px)", lineHeight: 1.05, letterSpacing: "-.01em", marginTop: 8 }}>{p.title}</span>
+        <span style={{ display: "block", fontSize: "clamp(16px,1.3vw,19px)", lineHeight: 1.55, marginTop: 18, maxWidth: "44ch" }}>{p.contribution}</span>
+        <span style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 20 }}>
+          {p.tags.slice(0, 3).map((tg) => <span key={tg} style={{ fontWeight: 500, fontSize: 13, border: "1px solid var(--line)", borderRadius: 999, padding: "4px 12px" }}>{tg}</span>)}
+        </span>
+        <span style={{ flex: 1, minHeight: 24 }} />
+        <span className="case-cta" style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 10, fontWeight: 500, fontSize: 15, color: "var(--bg)", background: "var(--fg)", borderRadius: 999, padding: "13px 20px", transition: "gap .3s ease" }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ac)" }} />Read the case study <span>→</span>
+        </span>
+      </span>
+      <span className="case-panel" style={{ display: "flex", flexDirection: "column", minHeight: 360, padding: "clamp(20px,2.6vw,32px)" }}>
+        <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, fontFamily: "ui-monospace,Menlo,monospace", fontSize: 11, letterSpacing: ".12em", color: "rgba(255,255,255,.6)" }}>
+          <span>HOW IT WORKS</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--ac)", boxShadow: "0 0 10px var(--ac)" }} />LIVE</span>
+        </span>
+        <span style={{ flex: 1, display: "flex", alignItems: "center", padding: "24px 0 8px" }}>
+          <span className="pipe" style={{ width: "100%" }}>
+            {steps.map((st, k) => <span key={st} className="pipe-step" style={{ animationDelay: (k * dur / Math.max(1, steps.length)).toFixed(2) + "s" }}>{st}</span>)}
+          </span>
+        </span>
+        <span style={{ fontFamily: "ui-monospace,Menlo,monospace", fontSize: 11, color: "rgba(255,255,255,.45)", letterSpacing: ".06em" }}>{(p.stack || "").split(" · ").slice(0, 5).join(" · ")}</span>
+      </span>
+    </button>
+  );
+}
+
 /* ---------- page ---------- */
 
 export default function Portfolio() {
@@ -169,18 +234,22 @@ export default function Portfolio() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [drafted, setDrafted] = useState(false);
+  const [briefCopied, setBriefCopied] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [type, setType] = useState("All");
   const [year, setYear] = useState("All");
   const [tech, setTech] = useState("All");
   const [techOpen, setTechOpen] = useState(false);
-  const rail = useRef(null);
+  const root = useRef(null);
   const dialog = useRef(null);
   const copyT = useRef(null);
   const returnFocus = useRef(null);
 
   useEffect(() => () => clearTimeout(copyT.current), []);
+  useEffect(() => initCrew(root.current), []);
 
   /* theme: follow the OS by default, remember an explicit choice */
   const toggleDark = () => setDark((d) => {
@@ -246,7 +315,9 @@ export default function Portfolio() {
   const all = useMemo(() => WORK.map((p) => ({
     ...p,
     techs: [...new Set([...p.tags, ...(p.stack || "").split(" · ")].map(norm).filter(Boolean))],
-    typeLabel: p.client ? "Client" : "Personal",
+    typeLabel: p.own ? "My company" : p.client ? "Client" : "Personal",
+    typeKey: p.client ? "Client" : "Personal",
+    cta: p.problem || p.outcome ? "Read case study →" : "View project →",
     y: String(p.year).slice(0, 4),
   })), []);
   const techOpts = useMemo(() => {
@@ -258,13 +329,13 @@ export default function Portfolio() {
   const cats = useMemo(() => WORK_CATS.filter((c) => all.some((p) => p.cat === c)), [all]);
 
   const ql = q.trim().toLowerCase();
-  const list = all.filter((p) => (cat === "All" || p.cat === cat) && (type === "All" || p.typeLabel === type) && (year === "All" || p.y === year) && (tech === "All" || p.techs.includes(tech))
+  const list = all.filter((p) => (cat === "All" || p.cat === cat) && (type === "All" || p.typeKey === type) && (year === "All" || p.y === year) && (tech === "All" || p.techs.includes(tech))
     && (!ql || [p.title, p.kind, p.summary, p.cat, ...p.techs].join(" ").toLowerCase().includes(ql)));
   const filtered = cat !== "All" || type !== "All" || year !== "All" || tech !== "All" || !!ql;
   const clearFilters = () => { setQ(""); setCat("All"); setType("All"); setYear("All"); setTech("All"); };
   const opts = (value, setter, values, labels) => values.map((v, i) => ({ v, label: labels ? labels[i] : v, ...tone(value === v), pick: () => setter(value === v && v !== "All" ? "All" : v) }));
 
-  const railBy = (dir) => { const r = rail.current; if (r) r.scrollBy({ left: dir * r.clientWidth * 0.8, behavior: "smooth" }); };
+  const selected = useMemo(() => all.filter((p) => p.selected).sort((a, b) => a.selected - b.selected), [all]);
 
   /* ----- case study ----- */
   const seq = list.some((p) => p.id === caseId) ? list : all;
@@ -275,14 +346,18 @@ export default function Portfolio() {
 
   /* ----- contact ----- */
   const setField = (k) => (e) => { const v = e.target.value; setForm((f) => ({ ...f, [k]: v })); };
-  const mailtoHref = () => {
-    const body = `Hi Harsh,\n\n${form.msg}\n\nLooking for: ${needs.join(", ") || "—"}\n\n— ${form.name} (${form.email})`;
-    return `mailto:${EMAIL}?subject=${encodeURIComponent("Project brief from " + form.name)}&body=${encodeURIComponent(body)}`;
+  const briefText = () => `Hi Harsh,\n\n${form.msg}\n\nLooking for: ${needs.join(", ") || "—"}\n\n— ${form.name} (${form.email})`;
+  const mailtoHref = () => `mailto:${EMAIL}?subject=${encodeURIComponent("Project brief from " + form.name)}&body=${encodeURIComponent(briefText())}`;
+  const copyBrief = () => {
+    try { navigator.clipboard.writeText(briefText()); } catch { /* clipboard unavailable */ }
+    setBriefCopied(true);
+    clearTimeout(copyT.current);
+    copyT.current = setTimeout(() => setBriefCopied(false), 1800);
   };
   const submit = async (e) => {
     e.preventDefault();
     setSendError(false);
-    if (!CONTACT_ENDPOINT) { window.location.href = mailtoHref(); setSent(true); return; }
+    if (!CONTACT_ENDPOINT) { window.location.href = mailtoHref(); setDrafted(true); return; }
     setSending(true);
     try {
       const res = await fetch(CONTACT_ENDPOINT, {
@@ -300,7 +375,7 @@ export default function Portfolio() {
   };
 
   const card = (p, isWide) => (
-    <button key={p.id} type="button" className="card" onClick={() => openCase(p.id)}
+    <button key={p.id} type="button" className="card rv" onClick={() => openCase(p.id)}
       style={isWide
         ? { flex: "none", width: "min(84vw,620px)", scrollSnapAlign: "start", fontFamily: "inherit", color: "inherit", textAlign: "left", background: "transparent", border: 0, padding: 0, cursor: "pointer", display: "flex", flexDirection: "column" }
         : { fontFamily: "inherit", color: "inherit", textAlign: "left", background: "transparent", border: 0, padding: 0, cursor: "pointer", display: "flex", flexDirection: "column", minWidth: 0 }}>
@@ -319,15 +394,17 @@ export default function Portfolio() {
             <span style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
               {p.tags.slice(0, 3).map((tg) => <span key={tg} style={{ fontWeight: 500, fontSize: 12, border: "1px solid var(--line)", borderRadius: 4, padding: "2px 8px" }}>{tg}</span>)}
             </span>
+            <span style={{ display: "inline-block", alignSelf: "flex-start", marginTop: 14, fontWeight: 500, fontSize: 14, borderBottom: "1px solid currentColor", paddingBottom: 2 }}>{p.cta}</span>
           </>}
     </button>
   );
 
   return (
-    <div className="pf" style={t}>
+    <div className="pf" style={t} ref={root}>
+      <div className="grain" aria-hidden="true" />
       <nav style={{ position: "sticky", top: 0, zIndex: 30, background: "var(--bg)" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: `18px ${PAD}`, display: "flex", alignItems: "center", gap: 18 }}>
-          <div style={{ display: "flex", gap: 16, flex: 1, flexWrap: "wrap", fontSize: 14, ...MUTED }}>
+          <div className="rv" style={{ display: "flex", gap: 16, flex: 1, flexWrap: "wrap", fontSize: 14, ...MUTED }}>
             <a href="#top" className="navlink" style={{ textDecoration: "none" }}>Home</a>
             <a href="#work" className="navlink" style={{ textDecoration: "none" }}>Work</a>
             <a href="#experience" className="navlink" style={{ textDecoration: "none" }}>Experience</a>
@@ -343,30 +420,30 @@ export default function Portfolio() {
         {/* hero */}
         <section style={{ minHeight: "calc(100svh - 72px)", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", alignContent: "flex-end", gap: "32px 48px", padding: "40px 0 clamp(32px,6vh,64px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px,2vh,20px)", minWidth: 0, flex: "0 1 auto" }}>
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px 28px", fontSize: 14, ...MUTED }}>
+            <div className="rv" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px 28px", fontSize: 14, ...MUTED, alignSelf: "flex-start" }}>
               <span>{AVAILABILITY}</span>
               <span>SDE @ GoRevive</span>
               <span>Noida · <Clock /> IST</span>
             </div>
             <h1 className="clash" style={{ fontWeight: 600, fontSize: "clamp(42px,7.2vw,110px)", lineHeight: 1.22, letterSpacing: "-0.01em", margin: 0 }}>
-              <span style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0 .2em" }}>Hi, I’m Harsh,
-                <span className="avatar" style={{ display: "inline-block", width: "1.45em", height: "1.45em", borderRadius: "50%", overflow: "hidden", flex: "none", transition: "transform .35s cubic-bezier(.3,1.6,.5,1)" }}>
+              <span style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0 .2em" }}><span className="rv">Hi, I’m Harsh,</span>
+                <span className="avatar rv" style={{ display: "inline-block", width: "1.45em", height: "1.45em", borderRadius: "50%", overflow: "hidden", flex: "none", transition: "transform .35s cubic-bezier(.3,1.6,.5,1)" }}>
                   <img src="/assets/harsh.webp" alt="Harsh Jha" width="160" height="160" fetchpriority="high" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </span>
               </span>
-              <span style={{ display: "block" }}>a <RotatingWord /></span>
-              <span style={{ display: "block" }}>Developer.</span>
+              <span className="rv" style={{ display: "table" }}>a <RotatingWord /></span>
+              <span className="rv" style={{ display: "table" }}>Developer.</span>
             </h1>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: "34ch", margin: "0 0 .6em" }}>
             <dl style={{ display: "grid", gridTemplateColumns: "repeat(3,auto)", justifyContent: "start", columnGap: 36, margin: 0, whiteSpace: "nowrap" }}>
               {[["Projects built", "250+"], ["Years building", "3Yrs"], ["Years coding", "6Yrs"]].map(([k, v]) => (
-                <div key={k}><dt style={{ fontSize: 13, ...MUTED }}>{k}</dt><dd className="clash" style={{ margin: "2px 0 0", fontWeight: 600, fontSize: 36, lineHeight: 1.1 }}>{v}</dd></div>
+                <div key={k} className="rv"><dt style={{ fontSize: 13, ...MUTED }}>{k}</dt><dd className="clash" style={{ margin: "2px 0 0", fontWeight: 600, fontSize: 36, lineHeight: 1.1 }}>{v}</dd></div>
               ))}
             </dl>
-            <p style={{ fontSize: 14, lineHeight: 1.6, margin: 0, ...MUTED }}>I design and build full-stack products — B2B platforms, payment flows, real-time apps and the sites that sell them.</p>
+            <p className="rv" style={{ fontSize: 14, lineHeight: 1.6, margin: 0, ...MUTED }}>I design and build full-stack products — B2B platforms, payment flows, real-time apps and the sites that sell them.</p>
             {/* the three things a recruiter looks for first */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div className="rv" style={{ display: "flex", flexWrap: "wrap", gap: 8, alignSelf: "flex-start" }}>
               <a href={RESUME} target="_blank" rel="noopener" className="grow" style={{ ...ctaBtn, color: "var(--bg)", background: "var(--fg)", border: "1px solid var(--fg)" }}>Résumé ↗</a>
               <a href={`mailto:${EMAIL}`} className="case-link" style={ctaBtn}>Email</a>
               <a href={LINKEDIN} target="_blank" rel="noopener" className="case-link" style={ctaBtn}>LinkedIn ↗</a>
@@ -376,10 +453,10 @@ export default function Portfolio() {
 
         {/* logo wall */}
         <section aria-labelledby="brands-h" style={{ paddingTop: "clamp(24px,4vw,48px)" }}>
-          <h2 id="brands-h" style={{ fontWeight: 500, fontSize: 14, ...MUTED, margin: "0 0 16px" }}>Companies, clients &amp; products I’ve built for</h2>
+          <h2 id="brands-h" className="rv" style={{ fontWeight: 500, fontSize: 14, ...MUTED, margin: "0 0 16px" }}>Companies, clients &amp; products I’ve built for</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,170px),1fr))", gap: 12 }}>
             {BRANDS.map((b) => (
-              <a key={b.name} href={b.link} target="_blank" rel="noopener" aria-label={b.name} title={b.name} className="brand"
+              <a key={b.name} href={b.link} target="_blank" rel="noopener" aria-label={b.name} title={b.name} className="brand rv"
                 style={{ display: "grid", placeItems: "center", height: 96, padding: "14px 20px", background: "#fff", border: "1px solid var(--line)", borderRadius: 10, textDecoration: "none", transition: "transform .25s ease,box-shadow .25s ease,border-color .25s ease" }}>
                 <BrandLogo b={b} />
               </a>
@@ -387,31 +464,58 @@ export default function Portfolio() {
           </div>
         </section>
 
-        {/* work */}
+        {/* selected work */}
         <section id="work" style={{ scrollMarginTop: 72, paddingTop: "clamp(40px,6vw,80px)" }}>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "12px 32px", marginBottom: 28 }}>
-            <h2 style={H2}>Work</h2>
-            <span style={{ fontSize: 14, ...MUTED, paddingBottom: 14 }}>{all.length} selected from 250+ built · tap any for the case study</span>
+            <h2 className="rv" style={H2}>Selected work</h2>
+            <span className="rv" style={{ fontSize: 14, ...MUTED, paddingBottom: 14 }}>Three builds I led end to end · 250+ shipped since 2023</span>
           </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(20px,3vw,32px)" }}>
+            {selected.map((p, i) => <SelectedCase key={p.id} p={p} i={i} onOpen={openCase} />)}
+          </div>
+        </section>
 
-          {!filtered && (
+        {/* experience */}
+        <section id="experience" style={{ scrollMarginTop: 72, paddingTop: "clamp(72px,9vw,120px)" }}>
+          <h2 className="rv" style={{ ...H2, marginBottom: 20 }}>Experience</h2>
+          {JOBS.map((j) => {
+            const isOpen = !!jobOpen[j.id];
+            return (
+              <div key={j.id} className="rv" style={{ borderBottom: "1px solid var(--line)" }}>
+                <button type="button" onClick={() => setJobOpen((s) => ({ ...s, [j.id]: !isOpen }))} aria-expanded={isOpen}
+                  style={{ fontFamily: "inherit", color: "inherit", textAlign: "left", width: "100%", background: "transparent", border: 0, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px 24px", padding: "16px 8px", cursor: "pointer" }}>
+                  {JOB_LOGO[j.id] && <JobLogo k={JOB_LOGO[j.id]} alt={j.company} />}
+                  <span style={{ flex: "1 1 280px", minWidth: 0 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 12, fontWeight: 500, fontSize: "clamp(24px,2.4vw,32px)", lineHeight: 1.2 }}>
+                      {j.company}
+                      {j.current && <span style={{ fontSize: 12, fontWeight: 500, background: "var(--fg)", color: "var(--bg)", borderRadius: 999, padding: "3px 10px" }}>Now</span>}
+                    </span>
+                    <span style={{ display: "block", fontWeight: 500, fontSize: 14, ...MUTED, marginTop: 2 }}>{j.role} | {j.place}</span>
+                  </span>
+                  <span style={{ fontSize: 15, ...MUTED, whiteSpace: "nowrap" }}>{j.dates}</span>
+                  <span style={{ flex: "none", width: 44, height: 44, display: "grid", placeItems: "center", fontSize: 22 }}>{isOpen ? "−" : "+"}</span>
+                </button>
+                {isOpen && (
+                  <ul style={{ listStyle: "none", margin: 0, padding: "0 8px 24px", display: "flex", flexDirection: "column", gap: 8, maxWidth: 760 }}>
+                    {j.points.map((pt) => <li key={pt} style={{ display: "flex", gap: 12, fontSize: 16, ...MUTED }}><span style={{ flex: "none" }}>↳</span><span>{pt}</span></li>)}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </section>
+
+        {/* archive */}
+        <section id="archive" style={{ scrollMarginTop: 72, paddingTop: "clamp(72px,9vw,120px)" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "12px 32px" }}>
+            <h2 className="rv" style={H2}>Archive</h2>
+            <span className="rv" style={{ fontSize: 14, ...MUTED, paddingBottom: 14 }}>{all.length} projects · client, personal and my company</span>
+          </div>
+          {!archiveOpen ? (
+            <button type="button" className="rv" onClick={() => setArchiveOpen(true)} style={{ fontFamily: "inherit", marginTop: 24, fontWeight: 500, fontSize: 16, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "14px 24px", cursor: "pointer" }}>Browse all {all.length} projects ↓</button>
+          ) : (
             <>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
-                <span style={{ fontWeight: 500, fontSize: 14, ...MUTED }}>Selected</span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {[["Previous", "←", -1], ["Next", "→", 1]].map(([label, glyph, dir]) => (
-                    <button key={label} type="button" onClick={() => railBy(dir)} aria-label={label} className="ring-hover"
-                      style={{ width: 44, height: 44, borderRadius: "50%", border: "1px solid var(--line)", background: "transparent", color: "var(--fg)", cursor: "pointer", fontSize: 16 }}>{glyph}</button>
-                  ))}
-                </div>
-              </div>
-              <div ref={rail} className="no-scrollbar" style={{ display: "flex", gap: 24, overflowX: "auto", scrollSnapType: "x mandatory", margin: `0 calc(-1 * ${PAD})`, padding: `0 ${PAD} 8px`, scrollPadding: `0 ${PAD}` }}>
-                {all.filter((p) => p.featured).map((p) => card(p, true))}
-              </div>
-            </>
-          )}
-
-          <div style={{ position: "sticky", top: 72, zIndex: 20, background: "var(--bg)", marginTop: "clamp(48px,6vw,80px)", padding: "14px 0", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ position: "sticky", top: 72, zIndex: 20, background: "var(--bg)", marginTop: 28, padding: "14px 0", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px 24px" }}>
               <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects or tech…" aria-label="Search projects" className="line-input"
                 style={{ ...lineInput, fontSize: 18, flex: "1 1 240px", maxWidth: 380, minWidth: 0, padding: "8px 0" }} />
@@ -444,6 +548,8 @@ export default function Portfolio() {
               <button type="button" onClick={clearFilters} style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 15, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", cursor: "pointer" }}>Clear filters</button>
             </div>
           )}
+            </>
+          )}
           {/* practice clones: kept, but low-key so client work leads */}
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 56, fontSize: 14, ...MUTED }}>
             <span style={{ marginRight: 4 }}>Practice clones:</span>
@@ -453,39 +559,9 @@ export default function Portfolio() {
           </div>
         </section>
 
-        {/* experience */}
-        <section id="experience" style={{ scrollMarginTop: 72, paddingTop: "clamp(72px,9vw,120px)" }}>
-          <h2 style={{ ...H2, marginBottom: 20 }}>Experience</h2>
-          {JOBS.map((j) => {
-            const isOpen = !!jobOpen[j.id];
-            return (
-              <div key={j.id} style={{ borderBottom: "1px solid var(--line)" }}>
-                <button type="button" onClick={() => setJobOpen((s) => ({ ...s, [j.id]: !isOpen }))} aria-expanded={isOpen}
-                  style={{ fontFamily: "inherit", color: "inherit", textAlign: "left", width: "100%", background: "transparent", border: 0, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px 24px", padding: "16px 8px", cursor: "pointer" }}>
-                  {JOB_LOGO[j.id] && <JobLogo k={JOB_LOGO[j.id]} alt={j.company} />}
-                  <span style={{ flex: "1 1 280px", minWidth: 0 }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 12, fontWeight: 500, fontSize: "clamp(24px,2.4vw,32px)", lineHeight: 1.2 }}>
-                      {j.company}
-                      {j.current && <span style={{ fontSize: 12, fontWeight: 500, background: "var(--fg)", color: "var(--bg)", borderRadius: 999, padding: "3px 10px" }}>Now</span>}
-                    </span>
-                    <span style={{ display: "block", fontWeight: 500, fontSize: 14, ...MUTED, marginTop: 2 }}>{j.role} | {j.place}</span>
-                  </span>
-                  <span style={{ fontSize: 15, ...MUTED, whiteSpace: "nowrap" }}>{j.dates}</span>
-                  <span style={{ flex: "none", width: 44, height: 44, display: "grid", placeItems: "center", fontSize: 22 }}>{isOpen ? "−" : "+"}</span>
-                </button>
-                {isOpen && (
-                  <ul style={{ listStyle: "none", margin: 0, padding: "0 8px 24px", display: "flex", flexDirection: "column", gap: 8, maxWidth: 760 }}>
-                    {j.points.map((pt) => <li key={pt} style={{ display: "flex", gap: 12, fontSize: 16, ...MUTED }}><span style={{ flex: "none" }}>↳</span><span>{pt}</span></li>)}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-        </section>
-
         {/* stack */}
         <section style={{ paddingTop: "clamp(72px,9vw,120px)" }}>
-          <h2 style={{ ...H2, marginBottom: 28 }}>Stack</h2>
+          <h2 className="rv" style={{ ...H2, marginBottom: 28 }}>Stack</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,380px),1fr))", gap: "28px 48px" }}>
             {STACK.map((s) => (
               <div key={s.label}>
@@ -504,7 +580,7 @@ export default function Portfolio() {
         {/* contact */}
         <section id="contact" style={{ scrollMarginTop: 72, paddingTop: "clamp(96px,12vw,180px)", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: "40px clamp(40px,6vw,96px)", alignItems: "start" }}>
           <div>
-            <h2 style={{ ...H2, lineHeight: 1.05 }}>Let’s work together</h2>
+            <h2 className="rv" style={{ ...H2, lineHeight: 1.05 }}>Let’s work together</h2>
             <p style={{ fontSize: 18, ...MUTED, margin: "20px 0 0", maxWidth: "40ch" }}>Have a product to build or a role to fill? Send a short brief — I reply within a day.</p>
             <button type="button" onClick={copyEmail} style={{ fontFamily: "inherit", marginTop: 28, display: "inline-flex", alignItems: "center", gap: 12, fontWeight: 500, fontSize: 18, color: "var(--fg)", background: "transparent", border: 0, borderBottom: "1px solid var(--fg)", padding: "0 0 4px", cursor: "pointer" }}>{copied ? "Copied ✓" : EMAIL + " ⧉"}</button>
           </div>
@@ -524,7 +600,13 @@ export default function Portfolio() {
                   Couldn’t send that. <a href={mailtoHref()} style={{ textDecoration: "underline" }}>Open it in your mail app</a> or email {EMAIL}.
                 </p>
               )}
-              <button type="submit" disabled={sending} className="grow" style={{ opacity: sending ? 0.6 : 1, alignSelf: "flex-start", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 12, fontWeight: 500, fontSize: 16, color: "var(--bg)", background: "var(--fg)", border: 0, borderRadius: 999, padding: "16px 32px", cursor: "pointer", transition: "transform .3s ease" }}>{sending ? "Sending…" : "Send brief"} <span>↗</span></button>
+              <button type="submit" disabled={sending} className="grow" style={{ opacity: sending ? 0.6 : 1, alignSelf: "flex-start", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 12, fontWeight: 500, fontSize: 16, color: "var(--bg)", background: "var(--fg)", border: 0, borderRadius: 999, padding: "16px 32px", cursor: "pointer", transition: "transform .3s ease" }}>{sending ? "Sending…" : CONTACT_ENDPOINT ? "Send brief" : "Open email draft"} <span>↗</span></button>
+              {drafted && (
+                <p role="status" style={{ fontSize: 15, lineHeight: 1.5, margin: 0, ...MUTED }}>
+                  Your mail app should have opened with the brief. Nothing opened? Email {EMAIL} —{" "}
+                  <button type="button" onClick={copyBrief} style={{ fontFamily: "inherit", fontSize: 15, fontWeight: 500, color: "var(--fg)", background: "transparent", border: 0, borderBottom: "1px solid currentColor", padding: 0, cursor: "pointer" }}>{briefCopied ? "Copied" : "Copy brief"}</button>
+                </p>
+              )}
             </form>
           ) : (
             <div>
@@ -551,7 +633,7 @@ export default function Portfolio() {
       </footer>
 
       {cs && (
-        <div ref={dialog} data-lenis-prevent role="dialog" aria-modal="true" aria-label={cs.title} style={{ position: "fixed", inset: 0, zIndex: 60, background: "var(--bg)", color: "var(--fg)", overflow: "auto" }}>
+        <div ref={dialog} data-lenis-prevent role="dialog" className="case-open" aria-modal="true" aria-label={cs.title} style={{ position: "fixed", inset: 0, zIndex: 60, background: "var(--bg)", color: "var(--fg)", overflow: "auto" }}>
           <div style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--bg)" }}>
             <div style={{ maxWidth: 1400, margin: "0 auto", padding: `18px ${PAD}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
               <button type="button" onClick={closeCase} className="ring-hover" style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 15, color: "var(--fg)", background: "transparent", border: "1px solid var(--line)", borderRadius: 999, padding: "8px 16px", cursor: "pointer" }}>← Back</button>
@@ -579,6 +661,7 @@ export default function Portfolio() {
               )}
               {cs.outcome && <div><div style={{ fontWeight: 500, fontSize: 14, ...MUTED, marginBottom: 12 }}>Outcome</div><p className="clash" style={{ fontWeight: 600, fontSize: 32, lineHeight: 1.15, margin: 0 }}>{cs.outcome}</p></div>}
             </div>
+            {import.meta.env.DEV && cs.note && <p style={{ marginTop: 40, fontSize: 14, lineHeight: 1.5, padding: "12px 16px", border: "1px dashed var(--line)", borderRadius: 12, ...MUTED }}>Draft note (dev only): {cs.note}</p>}
             <div style={{ marginTop: 56, fontSize: 15, ...MUTED }}>{cs.stack}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 20 }}>
               {[["live", "Live site"], ["github", "GitHub"], ["play", "Google Play"], ["ios", "App Store"], ["ms", "Microsoft Store"]].filter(([k]) => cs[k]).map(([k, label]) => (
