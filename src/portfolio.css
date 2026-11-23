@@ -1,0 +1,64 @@
+@font-face {
+  font-family: "Clash";
+  src: url("/assets/ClashDisplay-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Switzer";
+  src: url("/assets/Switzer-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@keyframes pf-ping {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  80%, 100% { transform: scale(1.5); opacity: 0; }
+}
+@keyframes pf-rise {
+  from { transform: translateY(0.35em); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+html { scroll-behavior: smooth; }
+html::-webkit-scrollbar { width: 0; }
+body { margin: 0; }
+
+.pf, .pf *, .pf *::before, .pf *::after { box-sizing: border-box; }
+.pf {
+  font-family: "Switzer", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  text-wrap: pretty;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.pf a { color: inherit; text-underline-offset: 3px; }
+.pf a:hover { color: inherit; opacity: 0.7; }
+.pf :focus { outline: none; }
+.pf :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.pf input::placeholder, .pf textarea::placeholder { color: #9a9a9a; }
+.pf .clash { font-family: "Clash", sans-serif; }
+.pf .no-scrollbar { scrollbar-width: none; }
+.pf .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* hover / focus states */
+.pf .navlink:hover { color: var(--fg); opacity: 1; }
+.pf .ring-hover:hover { border-color: var(--fg) !important; }
+.pf .avatar:hover { transform: rotate(-8deg) scale(1.12); }
+.pf .brand:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  border-color: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+.pf .chip-link:hover { opacity: 1; transform: scale(1.1); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); }
+.pf .media-pill:hover { color: #fff; opacity: 1; transform: scale(1.05); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25); }
+.pf .insta:hover { transform: rotate(-6deg) scale(1.06); }
+.pf .gh:hover { opacity: 1; letter-spacing: 0.02em; }
+.pf .grow:hover { transform: scale(1.05); }
+.pf .case-link:hover { opacity: 1; border-color: var(--fg); }
+.pf .line-input:focus { border-bottom-color: var(--fg) !important; }
